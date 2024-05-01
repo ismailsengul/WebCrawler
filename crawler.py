@@ -14,46 +14,32 @@ reddit = praw.Reddit(
 
 subreddit = reddit.subreddit("technology")
 
-total_posts = 50
+total_posts = 100
 top_posts = subreddit.top(time_filter='year', limit=total_posts)
 
 with open('reddit_technology_posts.csv', 'w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
-    writer.writerow(['Title', 'Score', 'URL', 'Top Comment', 'Top Comment Likes', 'Top Comment Dislikes', 'Worst Comment', 'Worst Comment Likes', 'Worst Comment Dislikes'])
+    writer.writerow(['Title', 'Score', 'URL', 'Top Comment','Top Comment Author','Top Comment Score','Comment Authors'])
 
     for post in tqdm(top_posts, total=total_posts, desc="Collecting Data",colour='green'):
-
         top_comment = ""
-        top_comment_likes = 0
-        top_comment_dislikes = 0
-        worst_comment = ""
-        worst_comment_likes = 0
-        worst_comment_dislikes = 0
-        top_score = float('-inf')
-        worst_score = float('inf')
+        top_comment_score = float('-inf')
         post_title = post.title
-
+        comment_authors = []
         for comment in post.comments:
             if isinstance(comment, praw.models.Comment):
-
-                if comment.score > top_score:
-                    top_score = comment.score
+                if comment.author:
+                    comment_authors.append(comment.author.name)
+                if comment.score > top_comment_score:
+                    top_comment_score = comment.score
                     top_comment = comment.body
-                    top_comment_likes = comment.ups
-                    top_comment_dislikes = comment.downs
-                if comment.score < worst_score:
-                    worst_score = comment.score
-                    worst_comment = comment.body
-                    worst_comment_likes = comment.ups
-                    worst_comment_dislikes = comment.downs
+                    top_comment_author = comment.author
 
-        if profanity.contains_profanity(worst_comment):
-            worst_comment = "Warning : comment containing profanity!"
         if profanity.contains_profanity(top_comment):
             top_comment = "Warning : comment containing profanity!"
         if profanity.contains_profanity(post_title):
             post_title = "Warning : comment containing profanity!"
 
-        writer.writerow([post_title, post.score, post.url, top_comment, top_comment_likes, top_comment_dislikes, worst_comment, worst_comment_likes, worst_comment_dislikes])
+        writer.writerow([post_title, post.score, post.url, top_comment,top_comment_author,top_comment_score,comment_authors])
 
     
